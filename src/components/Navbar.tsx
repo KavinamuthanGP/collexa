@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import { GraduationCap, LogOut, Menu, X, Bell } from 'lucide-react';
+import { GraduationCap, LogOut, Menu, X, Bell, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -63,6 +63,12 @@ export const Navbar = () => {
           <span className="ml-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary">
             {user.role}
           </span>
+          <Link
+            to="/settings"
+            className="flex items-center rounded-lg px-2.5 py-2 text-sm font-medium text-muted-foreground transition-all duration-200 hover:text-foreground"
+          >
+            <Settings className="mr-1.5 h-4 w-4" /> Settings
+          </Link>
           <Button variant="ghost" size="sm" onClick={logout} className="ml-1 text-muted-foreground hover:text-foreground transition-all hover:scale-[1.03]">
             <LogOut className="mr-1.5 h-4 w-4" /> Logout
           </Button>
@@ -104,9 +110,18 @@ export const Navbar = () => {
                 {user.role}
               </span>
             </div>
-            <Button variant="ghost" size="sm" onClick={logout} className="text-muted-foreground">
-              <LogOut className="mr-1.5 h-4 w-4" /> Logout
-            </Button>
+            <div className="flex items-center gap-2">
+              <Link
+                to="/settings"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <Settings className="h-4 w-4" /> Settings
+              </Link>
+              <Button variant="ghost" size="sm" onClick={logout} className="text-muted-foreground">
+                <LogOut className="mr-1.5 h-4 w-4" /> Logout
+              </Button>
+            </div>
           </div>
         </motion.div>
       )}

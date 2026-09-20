@@ -5,7 +5,63 @@
 
 
 @layer base {
+  /* Light theme (default when `dark` class is absent). */
   :root {
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    --primary: 230 85% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 222 30% 96%;
+    --secondary-foreground: 222 47% 11%;
+
+    --muted: 222 25% 96%;
+    --muted-foreground: 222 15% 40%;
+
+    --accent: 270 70% 60%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 222 20% 90%;
+    --input: 222 20% 90%;
+    --ring: 230 85% 60%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 222 30% 98%;
+    --sidebar-foreground: 222 30% 20%;
+    --sidebar-primary: 230 85% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 222 25% 95%;
+    --sidebar-accent-foreground: 222 30% 20%;
+    --sidebar-border: 222 20% 90%;
+    --sidebar-ring: 230 85% 60%;
+
+    --success: 152 60% 34%;
+    --success-foreground: 0 0% 100%;
+
+    --chart-1: 230 85% 60%;
+    --chart-2: 270 70% 60%;
+    --chart-3: 152 55% 48%;
+    --chart-4: 340 65% 55%;
+    --chart-5: 200 70% 50%;
+
+    --glow-primary: 230 85% 65%;
+    --glow-secondary: 270 70% 60%;
+  }
+
+  /* Dark theme — the original palette, unchanged. Applied via the `dark`
+     class on <html> (Tailwind `darkMode: ["class"]`). */
+  .dark {
     --background: 222 47% 6%;
     --foreground: 210 20% 92%;
 
@@ -98,7 +154,7 @@
 
   .glass-card {
     @apply border border-border/40 shadow-lg;
-    background: hsl(222 40% 10% / 0.6);
+    background: hsl(var(--card) / 0.6);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
   }
@@ -113,7 +169,7 @@
 
   .stat-card {
     @apply rounded-2xl border border-border/60 p-6 transition-all duration-300;
-    background: hsl(222 40% 10% / 0.7);
+    background: hsl(var(--card) / 0.7);
     backdrop-filter: blur(12px);
     box-shadow:
       0 1px 3px hsl(222 47% 3% / 0.3),
