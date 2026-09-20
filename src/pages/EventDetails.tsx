@@ -12,6 +12,7 @@ import { PageTransition } from '@/components/motion/PageTransition';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { DetailSkeleton } from '@/components/LoadingSkeleton';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
+import { formatDate } from '@/lib/date';
 
 const EventDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -57,7 +58,7 @@ const EventDetails = () => {
               <div className="glass-card-glow max-w-2xl rounded-2xl p-8">
                 <h1 className="mb-4 text-3xl font-bold text-foreground">{event.title}</h1>
                 <div className="mb-6 flex flex-wrap gap-4 text-sm text-muted-foreground">
-                  <span className="flex items-center gap-1"><Calendar className="h-4 w-4" />{event.date}</span>
+                  <span className="flex items-center gap-1"><Calendar className="h-4 w-4" />{formatDate(event.date)}</span>
                   <span className="flex items-center gap-1"><Tag className="h-4 w-4" />{event.category}</span>
                   {event.location && <span className="flex items-center gap-1"><MapPin className="h-4 w-4" />{event.location}</span>}
                   <span className="flex items-center gap-1"><User className="h-4 w-4" />Created by {creatorName}</span>

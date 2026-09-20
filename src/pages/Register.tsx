@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { GraduationCap, Loader2, User, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/AuthContext';
 import { PageTransition } from '@/components/motion/PageTransition';
 import { FloatingOrbs } from '@/components/motion/FloatingOrbs';
 import { motion } from 'framer-motion';
@@ -21,6 +22,7 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { refreshUser } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,6 +37,11 @@ const Register = () => {
         role,
         createdAt: new Date().toISOString(),
       });
+      // Re-read the profile from Firestore (the authoritative role source) so
+      // the auth state reflects the chosen role before routing. Without this,
+      // onAuthStateChanged — which fired at account creation, before the
+      // profile doc existed — leaves the stale 'student' fallback in place.
+      await refreshUser();
       navigate('/dashboard');
     } catch (err: any) {
       toast({ title: 'Registration failed', description: err.message, variant: 'destructive' });

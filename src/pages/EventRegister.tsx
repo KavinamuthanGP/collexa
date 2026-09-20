@@ -17,6 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Loader2, CheckCircle2 } from 'lucide-react';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import type { CampusEvent } from '@/types';
+import { formatDate } from '@/lib/date';
 
 const EventRegister = () => {
   const { id } = useParams<{ id: string }>();
@@ -106,7 +107,7 @@ const EventRegister = () => {
             <ScrollReveal>
               <div className="glass-card-glow rounded-2xl p-6">
                 <h2 className="text-xl font-bold text-foreground mb-1">Register for {event.title}</h2>
-                <p className="text-sm text-muted-foreground mb-6">{event.date} · {event.category}</p>
+                <p className="text-sm text-muted-foreground mb-6">{formatDate(event.date)} · {event.category}</p>
 
                 {!isOnline && (
                   <div className="mb-6 rounded-xl border border-amber-200/60 bg-amber-400/20 px-4 py-3 text-sm font-medium text-amber-950">

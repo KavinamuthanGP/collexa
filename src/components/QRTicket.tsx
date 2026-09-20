@@ -2,6 +2,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { motion } from 'framer-motion';
 import { Ticket, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { formatDate } from '@/lib/date';
 
 interface QRTicketProps {
   registrationId: string;
@@ -38,7 +39,7 @@ export const QRTicket = ({ registrationId, eventTitle, attendeeName, eventDate }
       <div className="space-y-1 mb-4">
         <p className="text-sm font-semibold text-foreground">{eventTitle}</p>
         <p className="text-xs text-muted-foreground">{attendeeName}</p>
-        <p className="text-xs text-muted-foreground">{eventDate}</p>
+        <p className="text-xs text-muted-foreground">{formatDate(eventDate)}</p>
         <p className="text-[10px] font-mono text-muted-foreground/60 mt-2">ID: {registrationId.slice(0, 12)}...</p>
       </div>
 

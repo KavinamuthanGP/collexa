@@ -12,6 +12,7 @@ import { Ticket, CalendarDays, MapPin, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import type { EventRegistration, CampusEvent } from '@/types';
+import { formatDate } from '@/lib/date';
 
 interface EnrichedRegistration extends EventRegistration {
   event?: CampusEvent;
@@ -78,7 +79,7 @@ const MyEvents = () => {
                       {reg.event?.date && (
                         <div className="flex items-center gap-1.5">
                           <CalendarDays className="h-3.5 w-3.5" />
-                          <span>{reg.event.date}</span>
+                          <span>{formatDate(reg.event.date)}</span>
                         </div>
                       )}
                       {reg.event?.location && (

@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { useToast } from '@/hooks/use-toast';
 import { BarChart3, Trash2, Users, Eye, CalendarDays, TrendingUp, Loader2 } from 'lucide-react';
 import type { CampusEvent, EventRegistration } from '@/types';
+import { formatDate } from '@/lib/date';
 
 const AdminDashboard = () => {
   const { user } = useAuth();
@@ -170,7 +171,7 @@ const AdminDashboard = () => {
                         <div key={ev.id} className="flex items-center justify-between p-4 hover:bg-muted/20 transition-colors">
                           <div className="min-w-0 flex-1">
                             <p className="text-sm font-medium text-foreground truncate">{ev.title}</p>
-                            <p className="text-xs text-muted-foreground">{ev.date} · {ev.category} · {regCounts[ev.id] || 0} registrations</p>
+                            <p className="text-xs text-muted-foreground">{formatDate(ev.date)} · {ev.category} · {regCounts[ev.id] || 0} registrations</p>
                           </div>
                           <div className="flex items-center gap-2 ml-4">
                             <Button

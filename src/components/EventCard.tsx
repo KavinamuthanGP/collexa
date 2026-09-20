@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Calendar, Tag, MapPin } from 'lucide-react';
 import type { CampusEvent } from '@/types';
 import { TiltCard } from '@/components/motion/TiltCard';
+import { formatDate } from '@/lib/date';
 
 const categoryColors: Record<string, string> = {
   Academic: 'bg-primary/10 text-primary',
@@ -29,7 +30,7 @@ export const EventCard = ({ event }: { event: CampusEvent }) => (
       <div className="flex items-center gap-3 text-xs text-muted-foreground">
         <span className="flex items-center gap-1.5">
           <Calendar className="h-3.5 w-3.5" />
-          {event.date}
+          {formatDate(event.date)}
         </span>
         {event.location && (
           <span className="flex items-center gap-1.5">

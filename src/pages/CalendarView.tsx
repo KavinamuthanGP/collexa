@@ -10,6 +10,7 @@ import { ChevronLeft, ChevronRight, CalendarDays, Tag } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import type { CampusEvent } from '@/types';
+import { formatDate } from '@/lib/date';
 
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -130,7 +131,7 @@ const CalendarView = () => {
               <ScrollReveal delay={0.1}>
                 <div className="glass-card-glow rounded-2xl p-5 h-fit">
                   <h3 className="text-base font-semibold text-foreground mb-3">
-                    {selectedDate ? `Events on ${selectedDate}` : 'Select a date'}
+                    {selectedDate ? `Events on ${formatDate(selectedDate)}` : 'Select a date'}
                   </h3>
                   {!selectedDate ? (
                     <p className="text-sm text-muted-foreground">Click on a date to see events.</p>

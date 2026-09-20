@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { GraduationCap, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/AuthContext';
 import { PageTransition } from '@/components/motion/PageTransition';
 import { FloatingOrbs } from '@/components/motion/FloatingOrbs';
 
@@ -16,12 +17,16 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { refreshUser } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
+      // Resolve the role from Firestore (authoritative source) before routing
+      // so the correct dashboard renders immediately and consistently.
+      await refreshUser();
       navigate('/dashboard');
     } catch (err: any) {
       toast({ title: 'Login failed', description: err.message, variant: 'destructive' });

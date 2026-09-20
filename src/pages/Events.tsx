@@ -11,9 +11,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Plus, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { EVENT_CATEGORIES, type CampusEvent, type EventCategory } from '@/types';
+import { isValidIsoDate } from '@/lib/date';
 import { PageTransition } from '@/components/motion/PageTransition';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { CardGridSkeleton } from '@/components/LoadingSkeleton';
@@ -49,6 +51,12 @@ const Events = () => {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
+    // The picker stores ISO dates, but it is not a native form control, so the
+    // browser's `required` validation no longer covers the date field.
+    if (!isValidIsoDate(date)) {
+      toast({ title: 'Please choose a date', variant: 'destructive' });
+      return;
+    }
     setSubmitting(true);
     try {
       await createEvent({ title, date, category, description, location, createdBy: user.uid });
@@ -111,7 +119,7 @@ const filtered = events.filter((ev) => {
                     </div>
                     <div>
                       <Label>Date</Label>
-                      <Input type="date" value={date} onChange={e => setDate(e.target.value)} required className="mt-1" />
+                      <DatePicker value={date} onChange={setDate} className="mt-1" />
                     </div>
                     <div>
                       <Label>Location</Label>
