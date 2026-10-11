@@ -12,12 +12,24 @@ import { DetailSkeleton } from '@/components/LoadingSkeleton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Loader2, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Loader2, CheckCircle2, Plus, Trash2 } from 'lucide-react';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import type { CampusEvent } from '@/types';
 import { formatDate } from '@/lib/date';
+import { formatEventParticipationSummary, resolveEventConfig } from '@/lib/eventParticipation';
+import {
+  buildTeamParticipants,
+  validateRegistrationSubmit,
+  type ParticipantInput,
+} from '@/lib/registrationValidation';
+
+const emptyParticipant = (): ParticipantInput => ({
+  name: '',
+  email: '',
+  college: '',
+  department: '',
+});
 
 const EventRegister = () => {
   const { id } = useParams<{ id: string }>();
@@ -30,10 +42,23 @@ const EventRegister = () => {
   const [registrationId, setRegistrationId] = useState<string | null>(null);
   const [alreadyRegistered, setAlreadyRegistered] = useState(false);
 
-  const [name, setName] = useState(user?.displayName || '');
-  const [email, setEmail] = useState(user?.email || '');
-  const [department, setDepartment] = useState('');
-  const [year, setYear] = useState('1');
+  const [leader, setLeader] = useState<ParticipantInput>(() => ({
+    name: user?.displayName || '',
+    email: user?.email || '',
+    college: '',
+    department: user?.department || '',
+  }));
+  const [teammates, setTeammates] = useState<ParticipantInput[]>([]);
+
+  useEffect(() => {
+    if (!user) return;
+    setLeader((current) => ({
+      ...current,
+      name: current.name || user.displayName || '',
+      email: current.email || user.email || '',
+      department: current.department || user.department || '',
+    }));
+  }, [user]);
 
   useEffect(() => {
     if (!id) return;
@@ -42,10 +67,16 @@ const EventRegister = () => {
       setEvent(ev);
       if (user) {
         const regs = await fetchRegistrationsByUser(user.uid).catch(() => []);
-        const existing = regs.find(r => r.eventId === id);
+        const existing = regs.find((r) => r.eventId === id);
         if (existing) {
           setAlreadyRegistered(true);
           setRegistrationId(existing.id);
+          setLeader({
+            name: existing.name,
+            email: existing.email,
+            college: existing.college || '',
+            department: existing.department,
+          });
         }
       }
       setLoading(false);
@@ -53,26 +84,124 @@ const EventRegister = () => {
     load();
   }, [id, user]);
 
+  const eventConfig = event ? resolveEventConfig(event) : null;
+  const isTeamEvent = eventConfig?.participationType === 'team';
+  const maxTeamSize = eventConfig?.maxTeamSize ?? 1;
+  const canAddTeammate = isTeamEvent && 1 + teammates.length < maxTeamSize;
+
+  const updateLeader = (field: keyof ParticipantInput, value: string) => {
+    setLeader((current) => ({ ...current, [field]: value }));
+  };
+
+  const updateTeammate = (index: number, field: keyof ParticipantInput, value: string) => {
+    setTeammates((current) =>
+      current.map((member, i) => (i === index ? { ...member, [field]: value } : member)),
+    );
+  };
+
+  const addTeammate = () => {
+    if (!canAddTeammate) return;
+    setTeammates((current) => [...current, emptyParticipant()]);
+  };
+
+  const removeTeammate = (index: number) => {
+    setTeammates((current) => current.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !id) return;
+    if (!user || !id || !event) return;
+
+    const validationError = validateRegistrationSubmit(event, leader, teammates);
+    if (validationError) {
+      toast({ title: validationError, variant: 'destructive' });
+      return;
+    }
+
     setSubmitting(true);
     try {
-      const regId = await registerForEvent({
-        eventId: id,
-        userId: user.uid,
-        name,
-        email,
-        department,
-        year,
-      });
+      const payload = isTeamEvent
+        ? {
+            eventId: id,
+            userId: user.uid,
+            name: leader.name.trim(),
+            email: leader.email.trim(),
+            college: leader.college.trim(),
+            department: leader.department.trim(),
+            participants: buildTeamParticipants(leader, teammates),
+          }
+        : {
+            eventId: id,
+            userId: user.uid,
+            name: leader.name.trim(),
+            email: leader.email.trim(),
+            college: leader.college.trim(),
+            department: leader.department.trim(),
+          };
+
+      const regId = await registerForEvent(payload);
       setRegistrationId(regId);
       toast({ title: 'Registered successfully!' });
-    } catch (err: any) {
-      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Registration failed';
+      toast({ title: 'Error', description: message, variant: 'destructive' });
     }
     setSubmitting(false);
   };
+
+  const renderParticipantFields = (
+    participant: ParticipantInput,
+    onChange: (field: keyof ParticipantInput, value: string) => void,
+    idPrefix: string,
+  ) => (
+    <div className="space-y-4">
+      <div>
+        <Label htmlFor={`${idPrefix}-name`}>Full Name</Label>
+        <Input
+          id={`${idPrefix}-name`}
+          value={participant.name}
+          onChange={(e) => onChange('name', e.target.value)}
+          required
+          className="mt-1"
+          placeholder="Jane Doe"
+        />
+      </div>
+      <div>
+        <Label htmlFor={`${idPrefix}-email`}>Email</Label>
+        <Input
+          id={`${idPrefix}-email`}
+          type="email"
+          value={participant.email}
+          onChange={(e) => onChange('email', e.target.value)}
+          required
+          className="mt-1"
+          placeholder="jane@university.edu"
+        />
+      </div>
+      <div>
+        <Label htmlFor={`${idPrefix}-college`}>College</Label>
+        <Input
+          id={`${idPrefix}-college`}
+          value={participant.college}
+          onChange={(e) => onChange('college', e.target.value)}
+          required
+          className="mt-1"
+          placeholder="Your college"
+        />
+      </div>
+      <div>
+        <Label htmlFor={`${idPrefix}-department`}>Department</Label>
+        <Input
+          id={`${idPrefix}-department`}
+          value={participant.department}
+          onChange={(e) => onChange('department', e.target.value)}
+          required
+          className="mt-1"
+          placeholder="Computer Science"
+        />
+      </div>
+    </div>
+  );
 
   return (
     <PageTransition>
@@ -94,12 +223,12 @@ const EventRegister = () => {
                 <h2 className="text-xl font-bold text-foreground mb-1">
                   {alreadyRegistered ? 'Already Registered!' : 'Registration Complete!'}
                 </h2>
-                <p className="text-sm text-muted-foreground">Here's your digital ticket</p>
+                <p className="text-sm text-muted-foreground">Here&apos;s your digital ticket</p>
               </div>
               <QRTicket
                 registrationId={registrationId}
                 eventTitle={event.title}
-                attendeeName={name || user?.displayName || 'Attendee'}
+                attendeeName={leader.name || user?.displayName || 'Attendee'}
                 eventDate={event.date}
               />
             </ScrollReveal>
@@ -107,7 +236,8 @@ const EventRegister = () => {
             <ScrollReveal>
               <div className="glass-card-glow rounded-2xl p-6">
                 <h2 className="text-xl font-bold text-foreground mb-1">Register for {event.title}</h2>
-                <p className="text-sm text-muted-foreground mb-6">{formatDate(event.date)} · {event.category}</p>
+                <p className="text-sm text-muted-foreground mb-1">{formatDate(event.date)} · {event.category}</p>
+                <p className="text-sm font-medium text-foreground mb-6">{formatEventParticipationSummary(event)}</p>
 
                 {!isOnline && (
                   <div className="mb-6 rounded-xl border border-amber-200/60 bg-amber-400/20 px-4 py-3 text-sm font-medium text-amber-950">
@@ -115,30 +245,46 @@ const EventRegister = () => {
                   </div>
                 )}
 
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <Label>Full Name</Label>
-                    <Input value={name} onChange={e => setName(e.target.value)} required className="mt-1" placeholder="Jane Doe" />
-                  </div>
-                  <div>
-                    <Label>Email</Label>
-                    <Input type="email" value={email} onChange={e => setEmail(e.target.value)} required className="mt-1" placeholder="jane@university.edu" />
-                  </div>
-                  <div>
-                    <Label>Department</Label>
-                    <Input value={department} onChange={e => setDepartment(e.target.value)} required className="mt-1" placeholder="Computer Science" />
-                  </div>
-                  <div>
-                    <Label>Year</Label>
-                    <Select value={year} onValueChange={setYear}>
-                      <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {['1', '2', '3', '4'].map(y => (
-                          <SelectItem key={y} value={y}>Year {y}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  {isTeamEvent ? (
+                    <>
+                      <div className="rounded-xl border border-border/60 p-4">
+                        <h3 className="mb-4 text-sm font-semibold text-foreground">Team leader (you)</h3>
+                        {renderParticipantFields(leader, updateLeader, 'leader')}
+                      </div>
+
+                      {teammates.map((teammate, index) => (
+                        <div key={index} className="rounded-xl border border-border/60 p-4">
+                          <div className="mb-4 flex items-center justify-between">
+                            <h3 className="text-sm font-semibold text-foreground">Teammate {index + 1}</h3>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeTeammate(index)}
+                              className="text-muted-foreground hover:text-destructive"
+                            >
+                              <Trash2 className="mr-1 h-4 w-4" /> Remove
+                            </Button>
+                          </div>
+                          {renderParticipantFields(
+                            teammate,
+                            (field, value) => updateTeammate(index, field, value),
+                            `teammate-${index}`,
+                          )}
+                        </div>
+                      ))}
+
+                      {canAddTeammate && (
+                        <Button type="button" variant="outline" className="w-full" onClick={addTeammate}>
+                          <Plus className="mr-2 h-4 w-4" /> Add teammate
+                        </Button>
+                      )}
+                    </>
+                  ) : (
+                    renderParticipantFields(leader, updateLeader, 'solo')
+                  )}
+
                   <Button type="submit" className="w-full transition-all hover:scale-[1.03]" disabled={submitting || !isOnline}>
                     {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Register & Get Ticket

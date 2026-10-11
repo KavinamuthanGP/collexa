@@ -1,6 +1,6 @@
 import { collection, getDocs, addDoc, query, where, serverTimestamp, deleteDoc, doc } from 'firebase/firestore';
 import { db } from './firebase';
-import type { EventRegistration } from '@/types';
+import type { EventRegistration, NewEventRegistration } from '@/types';
 import { assertOnline } from '@/lib/network';
 
 const COLLECTION = 'registrations';
@@ -17,7 +17,7 @@ export const fetchRegistrationsByEvent = async (eventId: string): Promise<EventR
   return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as EventRegistration));
 };
 
-export const registerForEvent = async (data: Omit<EventRegistration, 'id' | 'registeredAt'>): Promise<string> => {
+export const registerForEvent = async (data: NewEventRegistration): Promise<string> => {
   assertOnline();
   const docRef = await addDoc(collection(db, COLLECTION), {
     ...data,

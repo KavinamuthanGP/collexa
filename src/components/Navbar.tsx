@@ -18,7 +18,6 @@ export const Navbar = () => {
     { to: '/events', label: 'Events' },
     { to: '/calendar', label: 'Calendar' },
     { to: '/my-events', label: 'My Events' },
-    { to: '/teams', label: 'Teams' },
     ...(isAdmin ? [{ to: '/admin', label: 'Admin' }] : []),
   ];
 

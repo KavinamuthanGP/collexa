@@ -22,7 +22,6 @@ const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const CalendarView = lazy(() => import("./pages/CalendarView"));
 const Notifications = lazy(() => import("./pages/Notifications"));
 const Settings = lazy(() => import("./pages/Settings"));
-const Teams = lazy(() => import("./pages/Teams"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -58,7 +57,6 @@ const App = () => {
                 <Route path="/calendar" element={<ProtectedRoute><CalendarView /></ProtectedRoute>} />
                 <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
                 <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-                <Route path="/teams" element={<ProtectedRoute><Teams /></ProtectedRoute>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>

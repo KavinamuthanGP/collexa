@@ -13,6 +13,7 @@ import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { DetailSkeleton } from '@/components/LoadingSkeleton';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { formatDate } from '@/lib/date';
+import { formatEventParticipationSummary } from '@/lib/eventParticipation';
 
 const EventDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -64,6 +65,9 @@ const EventDetails = () => {
                   <span className="flex items-center gap-1"><User className="h-4 w-4" />Created by {creatorName}</span>
                   <span className="flex items-center gap-1"><Users className="h-4 w-4" />{regCount} registered</span>
                 </div>
+                <p className="mb-4 text-sm font-medium text-foreground">
+                  {formatEventParticipationSummary(event)}
+                </p>
                 <p className="leading-relaxed text-foreground mb-6">{event.description}</p>
                 {isOnline ? (
                   <Link to={`/events/${id}/register`}>

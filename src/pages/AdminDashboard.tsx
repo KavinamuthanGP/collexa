@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { BarChart3, Trash2, Users, Eye, CalendarDays, TrendingUp, Loader2 } from 'lucide-react';
 import type { CampusEvent, EventRegistration } from '@/types';
 import { formatDate } from '@/lib/date';
+import { formatLegacyRegistrationDetails, getRegistrationParticipants } from '@/lib/eventParticipation';
 
 const AdminDashboard = () => {
   const { user } = useAuth();
@@ -215,12 +216,42 @@ const AdminDashboard = () => {
               <p className="text-sm text-muted-foreground py-4 text-center">No registrations yet.</p>
             ) : (
               <div className="max-h-80 overflow-y-auto divide-y divide-border/40">
-                {selectedParticipants.map((p) => (
-                  <div key={p.id} className="py-3 px-1">
-                    <p className="text-sm font-medium text-foreground">{p.name}</p>
-                    <p className="text-xs text-muted-foreground">{p.email} · {p.department} · Year {p.year}</p>
-                  </div>
-                ))}
+                {selectedParticipants.map((registration) => {
+                  const participants = getRegistrationParticipants(registration);
+                  const isLegacyTeamDoc = participants.length === 1 && !registration.participants?.length;
+
+                  return (
+                    <div key={registration.id} className="py-3 px-1">
+                      {isLegacyTeamDoc ? (
+                        <>
+                          <p className="text-sm font-medium text-foreground">{registration.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {formatLegacyRegistrationDetails(registration)}
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-sm font-medium text-foreground mb-1">
+                            Registration · {participants.length} participant{participants.length !== 1 ? 's' : ''}
+                          </p>
+                          <div className="space-y-2 pl-2 border-l border-border/50">
+                            {participants.map((participant, index) => (
+                              <div key={`${registration.id}-${index}`}>
+                                <p className="text-sm text-foreground">
+                                  {participant.name}
+                                  {participant.role === 'leader' ? ' (Leader)' : ''}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  {participant.email} · {participant.college} · {participant.department}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </DialogContent>

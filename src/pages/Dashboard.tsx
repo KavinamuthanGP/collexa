@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
-import { CalendarDays, Users, Activity, Sparkles, Bell, TrendingUp, Ticket } from 'lucide-react';
+import { CalendarDays, Activity, Sparkles, Bell, TrendingUp, Ticket } from 'lucide-react';
 import { fetchEvents } from '@/services/events';
-import { fetchTeams } from '@/services/teams';
 import { getMatchInsight } from '@/services/ai';
 import { fetchRegistrationsByUser } from '@/services/registrations';
 import { Navbar } from '@/components/Navbar';
@@ -15,7 +14,7 @@ import { FloatingOrbs } from '@/components/motion/FloatingOrbs';
 import { StatSkeleton, CardGridSkeleton } from '@/components/LoadingSkeleton';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
-import type { CampusEvent, Team, MatchInsight } from '@/types';
+import type { CampusEvent, MatchInsight } from '@/types';
 
 const COLORS = [
   'hsl(230, 85%, 60%)',
@@ -29,7 +28,6 @@ const COLORS = [
 const Dashboard = () => {
   const { user, isAdmin, isStudent } = useAuth();
   const [events, setEvents] = useState<CampusEvent[]>([]);
-  const [teams, setTeams] = useState<Team[]>([]);
   const [insight, setInsight] = useState<MatchInsight | null>(null);
   const [loading, setLoading] = useState(true);
   const [myEventCount, setMyEventCount] = useState(0);
@@ -38,14 +36,12 @@ const Dashboard = () => {
     const load = async () => {
       const results = await Promise.allSettled([
         fetchEvents(),
-        fetchTeams(),
         getMatchInsight(),
         user && isStudent ? fetchRegistrationsByUser(user.uid) : Promise.resolve([]),
       ]);
       if (results[0].status === 'fulfilled') setEvents(results[0].value);
-      if (results[1].status === 'fulfilled') setTeams(results[1].value);
-      if (results[2].status === 'fulfilled') setInsight(results[2].value);
-      if (results[3].status === 'fulfilled') setMyEventCount((results[3].value as any[]).length);
+      if (results[1].status === 'fulfilled') setInsight(results[1].value);
+      if (results[2].status === 'fulfilled') setMyEventCount((results[2].value as { length: number }).length);
       setLoading(false);
     };
     load();
@@ -74,35 +70,16 @@ const Dashboard = () => {
   const studentStats = [
     { icon: CalendarDays, label: 'Upcoming Events', value: upcomingCount, iconClass: 'text-primary icon-pulse' },
     { icon: Ticket, label: 'My Registrations', value: myEventCount, iconClass: 'text-accent icon-pulse' },
-    { icon: Users, label: 'Active Teams', value: teams.length, iconClass: 'text-success icon-pulse' },
     { icon: Sparkles, label: 'AI Match Score', value: insight?.score ?? '—', iconClass: 'text-accent icon-glow', sub: insight?.message },
   ];
 
-  // ✅ FIXED: activeEvents instead of events
   const adminStats = [
     { icon: CalendarDays, label: 'Total Events', value: activeEvents.length, iconClass: 'text-primary icon-pulse' },
-    { icon: Users, label: 'Active Teams', value: teams.length, iconClass: 'text-accent icon-pulse' },
     { icon: Activity, label: 'Upcoming', value: upcomingCount, iconClass: 'text-success icon-pulse' },
     { icon: TrendingUp, label: 'Categories', value: Object.keys(categoryData).length, iconClass: 'text-accent icon-glow' },
   ];
 
   const stats = isAdmin ? adminStats : studentStats;
-
-  const studentActions = [
-    { to: '/events', label: 'Browse Events', icon: CalendarDays },
-    { to: '/calendar', label: 'Calendar', icon: Activity },
-    { to: '/my-events', label: 'My Events', icon: Ticket },
-    { to: '/teams', label: 'Teams', icon: Users },
-  ];
-
-  const adminActions = [
-    { to: '/events', label: 'Manage Events', icon: CalendarDays },
-    { to: '/admin', label: 'Admin Panel', icon: Sparkles },
-    { to: '/calendar', label: 'Calendar', icon: Activity },
-    { to: '/teams', label: 'Teams', icon: Users },
-  ];
-
-  const actions = isAdmin ? adminActions : studentActions;
 
   return (
     <PageTransition>
@@ -190,7 +167,7 @@ const Dashboard = () => {
                   </ScrollReveal>
                 )}
 
-                {activeEvents.length === 0 && teams.length === 0 && (
+                {activeEvents.length === 0 && (
                   <div className="glass-card rounded-2xl p-8 text-center">
                     <p className="text-muted-foreground">No data yet.</p>
                   </div>

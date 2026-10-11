@@ -14,8 +14,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { DatePicker } from '@/components/ui/date-picker';
 import { Plus, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { EVENT_CATEGORIES, type CampusEvent, type EventCategory } from '@/types';
+import { EVENT_CATEGORIES, type CampusEvent, type EventCategory, type ParticipationType, type RegistrationFeeType } from '@/types';
 import { isValidIsoDate } from '@/lib/date';
+import { validateAdminEventParticipation } from '@/lib/registrationValidation';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { PageTransition } from '@/components/motion/PageTransition';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { CardGridSkeleton } from '@/components/LoadingSkeleton';
@@ -35,6 +37,10 @@ const Events = () => {
   const [category, setCategory] = useState<EventCategory>('Academic');
   const [description, setDescription] = useState('');
   const [location, setLocation] = useState('');
+  const [participationType, setParticipationType] = useState<ParticipationType>('solo');
+  const [maxTeamSize, setMaxTeamSize] = useState('3');
+  const [registrationFeeType, setRegistrationFeeType] = useState<RegistrationFeeType>('free');
+  const [feeAmount, setFeeAmount] = useState('');
 
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState<EventCategory | 'All'>('All');
@@ -57,12 +63,43 @@ const Events = () => {
       toast({ title: 'Please choose a date', variant: 'destructive' });
       return;
     }
+    const parsedMaxTeamSize = participationType === 'team' ? Number.parseInt(maxTeamSize, 10) : 1;
+    const parsedFeeAmount = registrationFeeType === 'paid' ? Number.parseFloat(feeAmount) : 0;
+    const participationError = validateAdminEventParticipation({
+      participationType,
+      maxTeamSize: parsedMaxTeamSize,
+      registrationFeeType,
+      feeAmount: parsedFeeAmount,
+    });
+    if (participationError) {
+      toast({ title: participationError, variant: 'destructive' });
+      return;
+    }
+
     setSubmitting(true);
     try {
-      await createEvent({ title, date, category, description, location, createdBy: user.uid });
+      await createEvent({
+        title,
+        date,
+        category,
+        description,
+        location,
+        createdBy: user.uid,
+        participationType,
+        ...(participationType === 'team' ? { maxTeamSize: parsedMaxTeamSize } : {}),
+        registrationFeeType,
+        ...(registrationFeeType === 'paid' ? { feeAmount: parsedFeeAmount } : {}),
+      });
       toast({ title: 'Event created!' });
       setOpen(false);
-      setTitle(''); setDate(''); setDescription(''); setLocation('');
+      setTitle('');
+      setDate('');
+      setDescription('');
+      setLocation('');
+      setParticipationType('solo');
+      setMaxTeamSize('3');
+      setRegistrationFeeType('free');
+      setFeeAmount('');
       await load();
     } catch (err: any) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
@@ -140,6 +177,74 @@ const filtered = events.filter((ev) => {
                       <Label>Description</Label>
                       <Textarea value={description} onChange={e => setDescription(e.target.value)} required className="mt-1" rows={3} />
                     </div>
+                    <div>
+                      <Label>Participation type</Label>
+                      <RadioGroup
+                        value={participationType}
+                        onValueChange={(value) => setParticipationType(value as ParticipationType)}
+                        className="mt-2 flex gap-4"
+                      >
+                        <div className="flex items-center gap-2">
+                          <RadioGroupItem value="solo" id="participation-solo" />
+                          <Label htmlFor="participation-solo" className="font-normal">Solo</Label>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <RadioGroupItem value="team" id="participation-team" />
+                          <Label htmlFor="participation-team" className="font-normal">Team</Label>
+                        </div>
+                      </RadioGroup>
+                    </div>
+                    {participationType === 'team' && (
+                      <div>
+                        <Label htmlFor="max-team-size">Maximum team size (1–5)</Label>
+                        <Input
+                          id="max-team-size"
+                          type="number"
+                          min={1}
+                          max={5}
+                          value={maxTeamSize}
+                          onChange={(e) => setMaxTeamSize(e.target.value)}
+                          required
+                          className="mt-1"
+                        />
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Students may register with fewer participants, up to this maximum.
+                        </p>
+                      </div>
+                    )}
+                    <div>
+                      <Label>Registration fee</Label>
+                      <RadioGroup
+                        value={registrationFeeType}
+                        onValueChange={(value) => setRegistrationFeeType(value as RegistrationFeeType)}
+                        className="mt-2 flex gap-4"
+                      >
+                        <div className="flex items-center gap-2">
+                          <RadioGroupItem value="free" id="fee-free" />
+                          <Label htmlFor="fee-free" className="font-normal">Free</Label>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <RadioGroupItem value="paid" id="fee-paid" />
+                          <Label htmlFor="fee-paid" className="font-normal">Paid</Label>
+                        </div>
+                      </RadioGroup>
+                    </div>
+                    {registrationFeeType === 'paid' && (
+                      <div>
+                        <Label htmlFor="fee-amount">Fee amount (₹)</Label>
+                        <Input
+                          id="fee-amount"
+                          type="number"
+                          min={1}
+                          step={1}
+                          value={feeAmount}
+                          onChange={(e) => setFeeAmount(e.target.value)}
+                          required
+                          className="mt-1"
+                          placeholder="200"
+                        />
+                      </div>
+                    )}
                     <Button type="submit" className="w-full transition-all hover:scale-[1.03]" disabled={submitting || !isOnline}>
                       {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                       Create Event

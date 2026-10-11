@@ -9,6 +9,9 @@ export interface AppUser {
   year?: string;
 }
 
+export type ParticipationType = 'solo' | 'team';
+export type RegistrationFeeType = 'free' | 'paid';
+
 export interface CampusEvent {
   id: string;
   title: string;
@@ -21,6 +24,10 @@ export interface CampusEvent {
   club?: string;
   createdBy: string;
   createdAt: string;
+  participationType?: ParticipationType;
+  maxTeamSize?: number;
+  registrationFeeType?: RegistrationFeeType;
+  feeAmount?: number;
 }
 
 export type EventCategory = 'Academic' | 'Sports' | 'Cultural' | 'Tech' | 'Social' | 'Workshop';
@@ -40,6 +47,14 @@ export interface MatchInsight {
   message: string;
 }
 
+export interface RegistrationParticipant {
+  name: string;
+  email: string;
+  college: string;
+  department: string;
+  role: 'leader' | 'member';
+}
+
 export interface EventRegistration {
   id: string;
   eventId: string;
@@ -47,9 +62,14 @@ export interface EventRegistration {
   name: string;
   email: string;
   department: string;
-  year: string;
+  /** Legacy registrations only; not collected in the new registration flow. */
+  year?: string;
+  college?: string;
+  participants?: RegistrationParticipant[];
   registeredAt: string;
 }
+
+export type NewEventRegistration = Omit<EventRegistration, 'id' | 'registeredAt' | 'year'>;
 
 export interface Notification {
   id: string;
